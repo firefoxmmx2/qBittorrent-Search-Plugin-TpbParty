@@ -16,7 +16,7 @@ from helpers import download_file, retrieve_url
 
 
 class tpbparty(object): 
-    url = 'https://tpb.party'
+    url = 'https://pirateproxy.live'
 
     def __init__(self):
         self.name = 'tpb.party(thepiratebay proxy site)'
@@ -29,9 +29,11 @@ class tpbparty(object):
         def _search(url,query,cat,page):
             torrent_list = re_compile('(?s)<table id="searchResult">(.*)</table>')
             request_url = '{0}/search/{1}/{2}/99/{3}'.format(url,query,page,self.supported_categories[cat])
+            print('retrieve_url and return data..')
             data = retrieve_url(request_url)
-            print('>>',data)
-            data = torrent_list.search.group(0)
+            print('>> ',data)
+            data = torrent_list.search(data).group(0)
+            print('start parse feed data')
             parser.feed(data)
             parser.close()
             return data
@@ -42,6 +44,7 @@ class tpbparty(object):
         while True:
             if search_data == None or search_data.find('searchResult') != -1:
                 search_data = _search(self.url, query, cat, page)
+                print(">> page ", page)
                 page += 1
             else:
                 break
@@ -103,4 +106,4 @@ class tpbparty(object):
                 self.item = None
 if __name__ == '__main__':
     tpb = tpbparty()
-    tpb.search('sweetie fox 1')
+    tpb.search('sweetie fox')
