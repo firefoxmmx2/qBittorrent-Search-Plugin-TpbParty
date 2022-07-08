@@ -16,7 +16,8 @@ from helpers import download_file, retrieve_url
 
 
 class tpbparty(object): 
-    url = 'https://pirateproxy.live'
+    #  url = 'https://pirateproxy.live'
+    url = 'https://tpb.party'
 
     def __init__(self):
         self.name = 'tpb.party(thepiratebay proxy site)'
@@ -31,7 +32,7 @@ class tpbparty(object):
             request_url = '{0}/search/{1}/{2}/99/{3}'.format(url,query,page,self.supported_categories[cat])
             print('retrieve_url and return data..')
             data = retrieve_url(request_url)
-            print('>> ',data)
+            #  print('>> ',data)
             data = torrent_list.search(data).group(0)
             print('start parse feed data')
             parser.feed(data)
@@ -42,7 +43,7 @@ class tpbparty(object):
         page = 1
         
         while True:
-            if search_data == None or search_data.find('searchResult') != -1:
+            if search_data == None or search_data.find('detName') != -1:
                 search_data = _search(self.url, query, cat, page)
                 print(">> page ", page)
                 page += 1
@@ -58,34 +59,30 @@ class tpbparty(object):
             HTMLParser.__init__(self)
             self.url = url
             self.item = None
-            self.item_found = False
             self.size_found = False
             self.size_regex = re_compile('.*Size\s([^ ]*),.*')
             self.name_found = False
             self.stats_found = False 
-            self.stats = ['seed','leech']
+            self.stats = ['seeds','leech']
             self.stats_count = -1
 
         def handle_starttag(self,tag,attrs):
             attrsMap = dict(attrs)
-            if tag == 'tbody':
-                self.item_found = True
-            elif self.item_found: 
-                if tag == 'tr':
-                   self.item = dict() 
-                   self.item['engine_url'] = self.url
-                elif self.item:
-                    if tag == 'a':
-                        if attrsMap['class'] == 'detLink':
-                           self.item['desc_link'] = attrsMap['href']
-                           self.name_found = True
-                        elif attrsMap['href'].startswith('magnet'):
-                           self.item['link']=attrsMap['href']
-                    elif tag == 'font' and attrsMap['class'] == 'detDesc':
-                        self.size_found = True
-                    if tag == 'td' and attrsMap['align'] == 'right':
-                       self.stats_found = True
-                       self.stats_count += 1
+            if tag == 'tr' and ( 'class' not in attrsMap or 'class' in attrsMap and attrsMap['class'] != 'header' ):
+               self.item = dict() 
+               self.item['engine_url'] = self.url
+            elif self.item:
+                if tag == 'a':
+                    if 'class' in attrsMap and attrsMap['class'] == 'detLink':
+                       self.item['desc_link'] = attrsMap['href']
+                       self.name_found = True
+                    elif attrsMap['href'].startswith('magnet'):
+                       self.item['link']=attrsMap['href']
+                elif tag == 'font' and 'class' in attrsMap and attrsMap['class'] == 'detDesc':
+                    self.size_found = True
+                if tag == 'td' and 'align' in attrsMap and attrsMap['align'] == 'right':
+                   self.stats_found = True
+                   self.stats_count += 1
         def handle_data(self,data):
             if self.name_found:
                 self.item['name']=data
@@ -96,14 +93,17 @@ class tpbparty(object):
                     self.item['size']=result.group(1)
                     self.size_found = False
             elif self.stats_found:
+                print("self.stats_count = {0}, self.stats = {1}".format(self.stats_count, self.stats) )
                 self.item[self.stats[self.stats_count]]=data
-                if self.stats_count == len(self.stats):
-                    self.stats_count = -1
-                    self.stats_found = False
+                print("self.item[{0}] = {1}".format(self.stats[self.stats_count], self.item[self.stats[self.stats_count]]))
         def handle_endtag(self,tag):
             if tag == 'tr' and self.item and len(self.item) == 7:
                 prettyPrinter(self.item)
                 self.item = None
+            elif tag == 'td' and self.stats_found:
+                if self.stats_count == len(self.stats) -1:
+                    self.stats_count = -1
+                    self.stats_found = False
 if __name__ == '__main__':
     tpb = tpbparty()
     tpb.search('sweetie fox')
