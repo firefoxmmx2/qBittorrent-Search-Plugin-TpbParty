@@ -1,4 +1,4 @@
-#VERSION 1.0
+#VERSION: 1.0
 #Author: firefoxmmx (firefoxmmx@163.com)
 
 try:
