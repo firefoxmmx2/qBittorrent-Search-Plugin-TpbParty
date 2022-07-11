@@ -64,7 +64,7 @@ class tpbparty(object):
             self.name_found = False
             self.stats_found = False 
             self.stats = ['seeds','leech']
-            self.stats_count = -1
+            self.stats_count = 0
 
         def handle_starttag(self,tag,attrs):
             attrsMap = dict(attrs)
@@ -81,8 +81,7 @@ class tpbparty(object):
                 elif tag == 'font' and 'class' in attrsMap and attrsMap['class'] == 'detDesc':
                     self.size_found = True
                 if tag == 'td' and 'align' in attrsMap and attrsMap['align'] == 'right':
-                   self.stats_found = True
-                   self.stats_count += 1
+                    self.stats_found = True
         def handle_data(self,data):
             if self.name_found:
                 self.item['name']=data
@@ -101,9 +100,10 @@ class tpbparty(object):
                 prettyPrinter(self.item)
                 self.item = None
             elif tag == 'td' and self.stats_found:
-                if self.stats_count == len(self.stats) -1:
-                    self.stats_count = -1
-                    self.stats_found = False
+                self.stats_count += 1
+                self.stats_found = False
+                if self.stats_count == len(self.stats):
+                    self.stats_count = 0
 if __name__ == '__main__':
     tpb = tpbparty()
     tpb.search('sweetie fox')
