@@ -65,7 +65,6 @@ class tpbparty(object):
             self.stats_found = False 
             self.stats = ['seeds','leech']
             self.stats_count = -1
-            self.td_count = 0
 
         def handle_starttag(self,tag,attrs):
             attrsMap = dict(attrs)
@@ -81,11 +80,9 @@ class tpbparty(object):
                        self.item['link']=attrsMap['href']
                 elif tag == 'font' and 'class' in attrsMap and attrsMap['class'] == 'detDesc':
                     self.size_found = True
-                elif tag == 'td':
-                    self.td_count += 1
-                    if self.td_count > 2:
-                       self.stats_found = True
-                       self.stats_count += 1
+                if tag == 'td' and 'align' in attrsMap and attrsMap['align'] == 'right':
+                   self.stats_found = True
+                   self.stats_count += 1
         def handle_data(self,data):
             if self.name_found:
                 self.item['name']=data
@@ -103,10 +100,8 @@ class tpbparty(object):
             if tag == 'tr' and self.item and len(self.item) == 7:
                 prettyPrinter(self.item)
                 self.item = None
-            elif tag == 'td':
-                if self.td_count == 4:
-                    self.td_count=0
-                if self.stats_found and self.stats_count == len(self.stats) -1:
+            elif tag == 'td' and self.stats_found:
+                if self.stats_count == len(self.stats) -1:
                     self.stats_count = -1
                     self.stats_found = False
 if __name__ == '__main__':
